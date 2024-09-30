@@ -15,9 +15,9 @@ public class TreeTester {
         testFile1.createNewFile();
         testFile2.createNewFile();
         testFile3.createNewFile();
-        FileWriter write1 = new FileWriter(testFile1,true);
-        FileWriter write2 = new FileWriter(testFile2,true);
-        FileWriter write3 = new FileWriter(testFile3,true);
+        FileWriter write1 = new FileWriter(testFile1);
+        FileWriter write2 = new FileWriter(testFile2);
+        FileWriter write3 = new FileWriter(testFile3);
         write1.append("Test File 1");
         write2.append("Test File 2");
         write3.append("Test File 3");
@@ -28,9 +28,22 @@ public class TreeTester {
         //Tests to make sure objects were input properly
         Git git = new Git();
         try {
-            git.createTree(head);
+            git.createTree("","head");
+            resetRecur(head);
         } catch (Exception e) {
             System.out.println(e);
         }
+    }
+    private static void resetRecur (File file)
+    {
+        if (file.isDirectory())
+        {
+            String [] ls = file.list();
+            for (String fileName : ls) {
+                resetRecur(new File(file.getPath() + "/" + fileName));
+                System.out.println("deleted " + fileName);
+            }
+        }
+        file.delete();
     }
 }
