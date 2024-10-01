@@ -142,4 +142,7 @@ public class Git {
             filePath.delete();
         }
     }
+    public void resetTestFiles() {
+        
+    }
 }
