@@ -6,10 +6,11 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
+import java.util.StringBuilder;
 
 
 public class Git {
-    public boolean compressionOn = true;
+    public boolean compressionOn = false;
 
     public Git() {
         boolean newDirectoriesOrFilesCreated = false; // true if any new directories and/or files were created w/ this constructor method.
@@ -35,27 +36,98 @@ public class Git {
 
     // createBlob(String targetFile): creates a BLOB with a unique name holding targetFile's contents in the objects folder.
     // If compressionOn = true, targetFile's contents will be compressed before copying to the BLOB file.
-    public void createBlob(String targetFile) {
+    public void createBlob(String targetFile) throws IOException {
         if (compressionOn) {
             zipCompressBlob(targetFile);
         }
-        String uniqueHashName = generateUniqueFileName(targetFile);
+
+        FileReader readSource = new FileReader(targetFile);
+        StringBuilder sourceText = new StringBuilder();
+        while(readSource.ready())
+        {
+            sourceText.append(readSource.read());
+        }
+        readSource.close();
+
+        String uniqueHashName = generateUniqueFileName(sourceText.toString());
         File blob = new File("git/objects/" + uniqueHashName);
         File source = new File(targetFile);
         try {
             blob.createNewFile();
             FileOutputStream writer = new FileOutputStream(blob);
             Files.copy(source.toPath(), writer);
-            FileWriter writerOfIndex = new FileWriter("git/index");
-            writerOfIndex.write(uniqueHashName + "  " + source.getName() + "\n");
+            FileWriter writerOfIndex = new FileWriter("git/index",true);
+            writerOfIndex.write("blob " + uniqueHashName + " " + targetFile + "\n");
             writerOfIndex.close();
         } catch (IOException e) {
             e.printStackTrace();
         }
 
     }
+    
+    //createTree (String dirName, String path): Creates Tree from directory name and it's path
+    public String createTree (String path, String dirName) throws IOException
+    {
+        File dir = new File (path+dirName);
+        if (!dir.exists())
+            throw new IOException("This path does not work");
+
+        System.out.println(dir.getAbsolutePath());
+        String hash = createTreeRecursive(dir);
+        File indexFile = new File ("git/index");
+        FileWriter indexWriter = new FileWriter(indexFile,true);
+        indexWriter.append("tree "  + hash +" " + dir.getPath() + '\n');
+        indexWriter.close();
+        return hash;
+    }
+
+    // createTreeRecursive(File dir): Creates Tree recursively from directory and creates trees for subdirectories.
+    // @param directory that will be base of tree created
+    // @return Name of Tree File
+    private String createTreeRecursive (File dir) throws IOException
+    {
+        StringBuilder treeData = new StringBuilder();
+
+        File index = new File ("git/index");
+        FileWriter indexWrite = new FileWriter(index,true);
+
+        File [] list = dir.listFiles();
+        for (File file : list) {
+            if (file.isDirectory())
+            {
+                String treeHead = createTreeRecursive(file);
+                treeData.append("tree : "  + treeHead +" : " + file.getName() + '\n');              
+                indexWrite.append("tree "  + treeHead +" " + file.getPath() + '\n');
+            }
+            else
+            {
+                createBlob(file.getPath());
+                System.out.println("Blob Created: " + file.getName());
+                FileReader reader = new FileReader(file);
+                StringBuilder fileData = new StringBuilder();
+                while (reader.ready())
+                {
+                    fileData.append(reader.read());
+                }
+                
+                treeData.append("blob : " + generateUniqueFileName(fileData.toString()) + " : " + file.getName() + '\n');
+                reader.close();
+            }
+        }
+        indexWrite.close();
+
+        String treeName = generateUniqueFileName(treeData.toString());
+        File tree = new File ("git/objects/"+treeName);
+        FileWriter write = new FileWriter(tree);
+        write.append(treeData.toString());
+        write.close();
+
+        //zipCompressBlob(tree.getPath());
+        return treeName;
+    }
+
     // zipCompressBlob(String filePath): zips the file from filePath.
-    public void zipCompressBlob(String filePath) {
+    public static void zipCompressBlob(String filePath) {
         try {
             File originalFile = new File(filePath);
             String zipFileString = originalFile.getName().concat(".zip");
