@@ -2,42 +2,46 @@ import java.io.*;
 
 public class GitTester {
     public static void main(String[] args) {
-        System.out.println("Testing Git class...");
-
-        System.out.println("\nTesting constructor...");
-        System.out.println("Test 1: standard test (none of the directories nor files exist before)...");
-        Git testGit = new Git();
-        System.out.println("Sub-test a: preexistingFiles() -> When all 3 exist... " + testGit.preexistingFiles() + " should be: ttt");
-        
-        System.out.println("\nTest 2: calling Git() when all 3 directories and files exist...");
-        testGit = new Git();
-        System.out.print(" -> Should say: Git Repository already exists.");
-
-
-        System.out.println("\nTesting deleteAllDirectoriesAndFiles()...");
-        System.out.println("Test 1: all directories and files exist...");
-        testGit.deleteAllDirectoriesAndFiles();
-        System.out.print(" -> Should say: Files and directories successfully deleted.");
-
-        System.out.println("\nTest 2: none of the directories and files exist...");
-        testGit.deleteAllDirectoriesAndFiles();
-        System.out.print(" -> Should say: Files and directories successfully deleted.\n");
-        System.out.println("Now resetting the git repository:\n");
-        testGit = new Git();
-
-        //File testFile = new File("testingFile.txt");
+        // resetting previous test's setup
+        Git.deleteAllGitFiles();
+        Git.deleteAllTestFiles();
         try {
-            FileWriter fileWrite = new FileWriter("testingFile.txt");
-            BufferedWriter writer = new BufferedWriter(fileWrite);
-            writer.write("Hello world!");
-            writer.close();
+            Git.createTestFiles();
         } catch (IOException e) {
             e.printStackTrace();
         }
 
+        System.out.println("\nTESTING GIT CLASS");
 
-        testGit.createBlob("testingFile.txt");
-        testGit.deleteAllDirectoriesAndFiles();
+
+        // constructor testing
+        System.out.println("\n\nTesting constructor (2 tests)...");
+        System.out.println("\nTEST 1 - Standard Test (none of the directories nor files exist before):");
+        Git testGit = new Git();
+        System.out.println(" -> Should say: Git Repository successfully created!");
+        
+        System.out.println("\nTEST 2 - calling Git() when all 4 directories and files exist:");
+        testGit = new Git();
+        System.out.println(" -> Should say: Git Repository already exists.");
+
+
+        // deletion testing
+        System.out.println("\n\nTesting deleteAllDirectoriesAndFiles() (2 tests)...");
+        System.out.println("\nTEST 1 - Standard Test (all directories and files exist): " + Git.deleteAllGitFiles());
+        System.out.println(" -> should be: true");
+
+        System.out.println("\nTEST 2 - none of the directories and files exist: " + Git.deleteAllGitFiles());
+        System.out.println(" -> should be: false");
+
+        // (reset)
+        System.out.println("\n(Now resetting the git repository)\n");
+        testGit.setShowPrintedTestResults(false);
+        testGit = new Git();
+        testGit.setShowPrintedTestResults(true);
+
+
+        // blob testing
+        System.out.println("\nTesting createBlob(String)...");
+
     }
-
 }
