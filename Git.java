@@ -189,12 +189,12 @@ public class Git implements GitInterface {
     }
 
     // uses FileWriter to clear the previous index contents, and then calls on createTree to update index.
-    public String stage() {
+    public String stage(File startingDirectory) {
         try {
             FileWriter indexClearing = new FileWriter("git/index", false);
             indexClearing.write("");
             indexClearing.close();
-            return createTree(workingDirectoryPath, "");
+            return createTree(startingDirectory.getPath(), "");
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -206,12 +206,12 @@ public class Git implements GitInterface {
             System.out.println("This file path does not exist, or is a directory.");
             return;
         }
-        stage();
+        stage(givenFile);
     }
     // creates a commit file in the objects folder and calls on stage() method.
     public String commit(String author, String message) {
         try {
-            String hashOfWorkingDirectory = stage();
+            String hashOfWorkingDirectory = stage(new File(workingDirectoryPath));
             File currentCommitFile = new File("git/objects/TEMPORARYNAME");
 
             StringBuilder commitContents = new StringBuilder();
@@ -249,6 +249,26 @@ public class Git implements GitInterface {
     }
 
     public void checkout(String commitHash) {
+        File targetCommit = new File("git/objects/" + commitHash);
+        if (!targetCommit.exists()) {
+            System.out.println("Target commit does not exist.");
+            return;
+        }
+        try {
+            BufferedReader commitReader = new BufferedReader(new FileReader(targetCommit.getPath()));
+            traverse(targetCommit);
+
+            commitReader.close();
+            
+            FileWriter headWriter = new FileWriter("git/HEAD");
+            headWriter.write(commitHash);
+            headWriter.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void traverse (File commit) {
         
     }
 
